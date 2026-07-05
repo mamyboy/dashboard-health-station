@@ -120,8 +120,24 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
       };
   const ProgramIcon = programMeta.icon;
   const tabOptions = [
-    { value: 'dm' as Tab, label: 'DM', description: 'เบาหวาน', icon: Droplets },
-    { value: 'ht' as Tab, label: 'HT', description: 'ความดันโลหิตสูง', icon: HeartPulse },
+    {
+      value: 'dm' as Tab,
+      label: 'DM',
+      description: 'เบาหวาน',
+      icon: Droplets,
+      activeClass: 'bg-gradient-to-r from-sky-600 to-blue-700 text-white shadow-md shadow-sky-500/25 ring-1 ring-sky-300/40',
+      inactiveClass: 'text-sky-700 hover:bg-sky-500/10 hover:text-sky-800 dark:text-sky-300 dark:hover:bg-sky-400/10',
+      iconClass: 'text-sky-600 dark:text-sky-300',
+    },
+    {
+      value: 'ht' as Tab,
+      label: 'HT',
+      description: 'ความดันโลหิตสูง',
+      icon: HeartPulse,
+      activeClass: 'bg-gradient-to-r from-rose-600 to-red-700 text-white shadow-md shadow-rose-500/25 ring-1 ring-rose-300/40',
+      inactiveClass: 'text-rose-700 hover:bg-rose-500/10 hover:text-rose-800 dark:text-rose-300 dark:hover:bg-rose-400/10',
+      iconClass: 'text-rose-600 dark:text-rose-300',
+    },
   ];
 
   return (
@@ -162,7 +178,7 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
         </div>
 
         <div className="flex flex-col gap-3 border-t bg-white/75 px-4 py-3 backdrop-blur dark:bg-slate-950/45 md:flex-row md:items-center">
-          <div className="inline-flex w-full rounded-lg border bg-muted/60 p-1 md:w-auto">
+          <div className="inline-flex w-full rounded-lg border border-border/70 bg-muted/50 p-1 shadow-inner md:w-auto">
             {tabOptions.map((option) => (
               <button
                 key={option.value}
@@ -170,11 +186,11 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
                 className={cn(
                   'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-all md:flex-none',
                   tab === option.value
-                    ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? option.activeClass
+                    : option.inactiveClass
                 )}
               >
-                <option.icon className={cn('h-4 w-4', tab === option.value && (option.value === 'dm' ? 'text-sky-600' : 'text-emerald-600'))} />
+                <option.icon className={cn('h-4 w-4', tab === option.value ? 'text-white' : option.iconClass)} />
                 <span>{option.label}</span>
                 <span className="hidden text-xs font-medium opacity-70 sm:inline">{option.description}</span>
               </button>
