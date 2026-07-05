@@ -222,8 +222,8 @@ export function PingPongDetailCard({ summary, program }: Props) {
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
       {/* Header */}
       <div className="relative overflow-hidden border-b px-6 py-5">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-cyan-500/95 to-emerald-500/90 dark:from-cyan-950/90 dark:via-cyan-900/85 dark:to-emerald-950/80" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_35%,rgba(255,255,255,0.24),transparent_32%),radial-gradient(circle_at_82%_45%,rgba(255,255,255,0.16),transparent_36%)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-cyan-950 to-emerald-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_35%,rgba(34,211,238,0.22),transparent_34%),radial-gradient(circle_at_82%_45%,rgba(16,185,129,0.18),transparent_38%)]" />
         <div className="relative flex items-center gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/18 ring-1 ring-white/30 backdrop-blur-sm">
             <Activity className="h-5 w-5 text-primary-foreground" />
