@@ -1,6 +1,9 @@
 "use client"
 
-import { Bell, Search, Moon, Sun, RefreshCw, User, Sparkles, CalendarDays } from 'lucide-react'
+import {
+  Bell, Search, Moon, Sun, RefreshCw, User, Sparkles, CalendarDays,
+  PanelLeft, PanelLeftClose, PanelLeftOpen,
+} from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,9 +14,20 @@ import { cn } from '@/lib/utils'
 interface TopNavbarProps {
   title?: string
   subtitle?: string
+  sidebarCollapsed?: boolean
+  sidebarHidden?: boolean
+  onToggleSidebarCollapse?: () => void
+  onToggleSidebarHidden?: () => void
 }
 
-export function TopNavbar({ title = 'ภาพรวมระบบ', subtitle }: TopNavbarProps) {
+export function TopNavbar({
+  title = 'ภาพรวมระบบ',
+  subtitle,
+  sidebarCollapsed = false,
+  sidebarHidden = false,
+  onToggleSidebarCollapse,
+  onToggleSidebarHidden,
+}: TopNavbarProps) {
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -31,6 +45,29 @@ export function TopNavbar({ title = 'ภาพรวมระบบ', subtitle }
 
   return (
     <header className="sticky top-0 z-30 flex h-[72px] items-center gap-4 border-b border-white/70 bg-white/80 px-6 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:bg-slate-950/75">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebarHidden}
+          className="h-9 w-9 rounded-lg bg-white/60 shadow-sm hover:bg-cyan-50 dark:bg-white/5 dark:hover:bg-cyan-400/10"
+          title={sidebarHidden ? 'แสดง sidebar' : 'ซ่อน sidebar'}
+        >
+          {sidebarHidden ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </Button>
+        {!sidebarHidden && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebarCollapse}
+            className="h-9 w-9 rounded-lg bg-white/60 shadow-sm hover:bg-cyan-50 dark:bg-white/5 dark:hover:bg-cyan-400/10"
+            title={sidebarCollapsed ? 'ขยาย sidebar' : 'ย่อ sidebar'}
+          >
+            <PanelLeft className={cn('h-4 w-4 transition-transform', sidebarCollapsed && 'rotate-180')} />
+          </Button>
+        )}
+      </div>
+
       {/* Title */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
