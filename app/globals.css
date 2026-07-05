@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 204 56% 97%;
+    --foreground: 222 47% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 186 77% 94%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 95%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 167 70% 92%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 206 38% 88%;
+    --input: 206 38% 88%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 220 43% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 43% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 190 95% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 190 72% 18%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 30% 20%;
+    --input: 217 30% 20%;
+    --ring: 190 95% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background:
+      linear-gradient(135deg, hsl(199 89% 96%) 0%, hsl(168 72% 97%) 36%, hsl(44 96% 97%) 68%, hsl(0 0% 100%) 100%);
+  }
+
+  .dark body {
+    background:
+      linear-gradient(135deg, hsl(220 43% 7%) 0%, hsl(206 52% 10%) 42%, hsl(184 45% 9%) 100%);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .gradient-health {
+    background: linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, #10B981 0%, #22C55E 100%);
+  }
+
+  .gradient-warning {
+    background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  }
+
+  .gradient-purple {
+    background: linear-gradient(135deg, #8B5CF6 0%, #2563EB 100%);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  .dark .glass-card {
+    background: rgba(15, 23, 42, 0.82);
+  }
+
+  .dashboard-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.28) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.28) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .surface-card {
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.96), hsl(var(--card) / 0.88));
+    border-color: hsl(var(--border) / 0.72);
+    box-shadow: 0 16px 42px -32px hsl(222 47% 11% / 0.42);
+  }
+
+  /* Fade-slide-up animation สำหรับการ์ด */
+  .animate-fade-up {
+    animation: fadeUp 0.4s ease both;
+  }
+  .animate-fade-up-delay-1 { animation: fadeUp 0.4s 0.05s ease both; }
+  .animate-fade-up-delay-2 { animation: fadeUp 0.4s 0.10s ease both; }
+  .animate-fade-up-delay-3 { animation: fadeUp 0.4s 0.15s ease both; }
+  .animate-fade-up-delay-4 { animation: fadeUp 0.4s 0.20s ease both; }
+  .animate-fade-up-delay-5 { animation: fadeUp 0.4s 0.25s ease both; }
+  .animate-fade-up-delay-6 { animation: fadeUp 0.4s 0.30s ease both; }
+  .animate-fade-up-delay-7 { animation: fadeUp 0.4s 0.35s ease both; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse dot สำหรับ Live indicator */
+  .live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    animation: pulseDot 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* Shimmer สำหรับ skeleton */
+  .shimmer {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--accent)) 50%, hsl(var(--muted)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  /* Card hover glow */
+  .card-hover-glow:hover {
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.26), 0 18px 42px -28px hsl(var(--primary) / 0.55);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
