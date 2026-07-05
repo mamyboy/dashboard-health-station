@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Health Station Dashboard',
@@ -17,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="th" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
