@@ -71,14 +71,23 @@ export function FilterBar({ records, filters, onChange, compact = false }: Filte
       return r.isHealthStation === 'Y';
     });
     // group โดยชื่อหน่วยบริการ (serviceUnit) — ใช้เป็น value ส่งให้ filter
-    const seen = new Set<string>();
-    const opts: { value: string; label: string }[] = [];
+    // เก็บชื่อหมู่บ้านที่สังกัด Health Station นี้ไว้แสดงใน label ด้วย
+    const grouped: Record<string, { value: string; label: string; villages: Set<string> }> = {};
     base.forEach(r => {
-      if (!seen.has(r.serviceUnit)) {
-        seen.add(r.serviceUnit);
-        // label: ชื่อหน่วยบริการ (อำเภอ)
-        opts.push({ value: r.serviceUnit, label: `${r.serviceUnit} (${r.district})` });
+      if (!grouped[r.serviceUnit]) {
+        grouped[r.serviceUnit] = { value: r.serviceUnit, label: r.serviceUnit, villages: new Set() };
       }
+      if (r.village) grouped[r.serviceUnit].villages.add(r.village);
+    });
+    const opts: { value: string; label: string }[] = Object.values(grouped).map(o => {
+      const villages = [...o.villages];
+      const villageLabel = villages.length === 1
+        ? villages[0]
+        : villages.join(', ');
+      return {
+        value: o.value,
+        label: villageLabel ? `${o.value} (${villageLabel})` : o.value,
+      };
     });
     return opts.sort((a, b) => a.label.localeCompare(b.label, 'th'));
   }, [records, filters.district, filters.subdistrict]);

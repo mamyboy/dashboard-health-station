@@ -11,8 +11,9 @@ import { KpiCard, BentoCard } from '@/components/dashboard/KpiCard';
 import { DonutRiskChart, BarComparisonChart } from '@/components/charts/Charts';
 import { FilterBar } from '@/components/filters/FilterBar';
 import { PingPongDetailCard } from '@/components/dashboard/PingPongDetailCard';
-import { AggregatedRecord, AggregatedFilterState, ProgramType } from '@/types/health-station';
-import { filterAggregated, sumRecords, groupByDistrict, groupBySubdistrict, groupByVillage } from '@/lib/calculations';
+import { PopulationPanel } from '@/components/dashboard/PopulationPanel';
+import { AggregatedRecord, AggregatedFilterState, ProgramType, PopulationRecord, PopulationSummary } from '@/types/health-station';
+import { filterAggregated, sumRecords, groupByDistrict, groupBySubdistrict, groupByVillage, filterPopulation, sumPopulation } from '@/lib/calculations';
 import { formatNumber, formatPercent, PING_PONG_COLORS, SCREENING_STATUS_COLORS } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
@@ -21,12 +22,14 @@ type Tab = ProgramType;
 interface Props {
   initialDmData: AggregatedRecord[];
   initialHtData: AggregatedRecord[];
+  initialPopData: PopulationRecord[];
 }
 
-export function DashboardClient({ initialDmData, initialHtData }: Props) {
+export function DashboardClient({ initialDmData, initialHtData, initialPopData }: Props) {
   const [tab, setTab]     = useState<Tab>('dm');
   const [dmData, setDmData] = useState<AggregatedRecord[]>(initialDmData);
   const [htData, setHtData] = useState<AggregatedRecord[]>(initialHtData);
+  const [popData, setPopData] = useState<PopulationRecord[]>(initialPopData);
   const [filters, setFilters] = useState<Partial<AggregatedFilterState>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -39,17 +42,20 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
     setRefreshing(true);
     setError(null);
     try {
-      const [dmRes, htRes] = await Promise.all([
+      const [dmRes, htRes, popRes] = await Promise.all([
         fetch(`/api/sheet?program=dm&t=${Date.now()}`, { cache: 'no-store' }),
         fetch(`/api/sheet?program=ht&t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`/api/sheet?program=pop&t=${Date.now()}`, { cache: 'no-store' }),
       ]);
-      if (!dmRes.ok || !htRes.ok) throw new Error('fetch failed');
-      const [dm, ht]: [AggregatedRecord[], AggregatedRecord[]] = await Promise.all([
+      if (!dmRes.ok || !htRes.ok || !popRes.ok) throw new Error('fetch failed');
+      const [dm, ht, pop]: [AggregatedRecord[], AggregatedRecord[], PopulationRecord[]] = await Promise.all([
         dmRes.json(),
         htRes.json(),
+        popRes.json(),
       ]);
       setDmData(dm);
       setHtData(ht);
+      setPopData(pop);
       setLastUpdated(new Date());
       setFilters({});
     } catch {
@@ -91,6 +97,37 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
   const totalPatients = useMemo(() =>
     summary.darkGreen + summary.yellow + summary.orange + summary.red + (tab === 'dm' ? summary.black : 0),
   [summary, tab]);
+
+  // ===== Population (Sheet Pop) =====
+  // กรองตามตัวกรองหลัก (พื้นที่) ก่อน แล้วคำนวณผลรวมทุกช่วงอายุโดยอัตโนมัติ
+  const popFilteredByMain = useMemo(() => filterPopulation(popData, filters), [popData, filters]);
+  const popSummary: PopulationSummary = useMemo(() =>
+    sumPopulation(popFilteredByMain, 'all', []),
+  [popFilteredByMain]);
+
+  // ดึงชื่อหน่วยบริการ - ชื่อหมู่บ้าน ของ Health Station เพื่อแสดงเป็น Title
+  // กรณีเลือก "เป็น Health Station" (Y) จะแสดงทุกแห่ง
+  // กรณีเลือกหน่วยบริการเฉพาะ จะแสดงเฉพาะหมู่บ้านที่เป็น Health Station ของแห่งนั้น
+  const healthStationTitle = useMemo(() => {
+    if (!filters.healthStation || filters.healthStation === 'all') return null;
+    const matches = popData.filter(r =>
+      r.isHealthStation === 'Y' &&
+      (filters.healthStation === 'Y' || r.serviceUnit === filters.healthStation)
+    );
+    const items = matches.map(r => ({
+      serviceUnit: r.serviceUnit,
+      village: r.village,
+    }));
+    // ลบรายการซ้ำ (หน่วยบริการ + หมู่บ้าน เดียวกัน)
+    const seen = new Set<string>();
+    const unique = items.filter(it => {
+      const key = `${it.serviceUnit}__${it.village}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    return unique.length ? unique : null;
+  }, [filters.healthStation, popData]);
 
   const barData = byDistrict.map(d => ({
     district: d.district,
@@ -195,6 +232,13 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
 
       {/* Filter — options สร้างจากข้อมูลจริงจาก sheet */}
       <FilterBar records={allRecords} filters={filters} onChange={setFilters} />
+
+      {/* Population KPI (Sheet Pop) — แปลผันตามตัวกรองหลัก */}
+      <PopulationPanel
+        records={popFilteredByMain}
+        summary={popSummary}
+        healthStationTitle={healthStationTitle}
+      />
 
       {/* KPI Row 1 */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">

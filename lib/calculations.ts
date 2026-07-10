@@ -1,4 +1,4 @@
-import { AggregatedRecord, AggregatedFilterState, AggregateSummary } from '@/types/health-station';
+import { AggregatedRecord, AggregatedFilterState, AggregateSummary, PopulationRecord, PopulationFilterState, PopulationSummary, AGE_GROUPS, Gender } from '@/types/health-station';
 
 export function filterAggregated(
   records: AggregatedRecord[],
@@ -91,4 +91,59 @@ export function groupByVillage(records: AggregatedRecord[]) {
     d.notScreened += r.notScreened;
   }
   return Object.values(map).sort((a, b) => b.total - a.total);
+}
+
+// ===== Population Calculations (Sheet Pop) =====
+
+/** กรองข้อมูลประชากรตามพื้นที่ */
+export function filterPopulation(
+  records: PopulationRecord[],
+  filters: Partial<PopulationFilterState>
+): PopulationRecord[] {
+  return records.filter(r => {
+    if (filters.district     && filters.district     !== 'all' && r.district     !== filters.district)     return false;
+    if (filters.subdistrict  && filters.subdistrict  !== 'all' && r.subdistrict  !== filters.subdistrict)  return false;
+    if (filters.serviceUnit  && filters.serviceUnit  !== 'all' && r.serviceUnit  !== filters.serviceUnit)  return false;
+    if (filters.village      && filters.village      !== 'all' && r.village      !== filters.village)      return false;
+    if (filters.healthStation && filters.healthStation !== 'all') {
+      if (filters.healthStation === 'Y') {
+        if (r.isHealthStation !== 'Y') return false;
+      } else {
+        if (r.isHealthStation !== 'Y' || r.serviceUnit !== filters.healthStation) return false;
+      }
+    }
+    return true;
+  });
+}
+
+/** คำนวณผลรวมประชากรตามเพศและช่วงอายุที่เลือก */
+export function sumPopulation(
+  records: PopulationRecord[],
+  gender: Gender = 'all',
+  ageGroups: number[] = []
+): PopulationSummary {
+  const groups = ageGroups.length > 0 ? ageGroups : AGE_GROUPS.map(g => g.id);
+  const byAgeGroup = AGE_GROUPS
+    .filter(g => groups.includes(g.id))
+    .map(g => {
+      let male = 0;
+      let female = 0;
+      for (const r of records) {
+        male   += r[`male_g${g.id}` as keyof PopulationRecord] as number;
+        female += r[`female_g${g.id}` as keyof PopulationRecord] as number;
+      }
+      return {
+        id: g.id,
+        label: g.label,
+        male,
+        female,
+        total: male + female,
+      };
+    });
+
+  const maleTotal   = byAgeGroup.reduce((s, g) => s + (gender === 'female' ? 0 : g.male), 0);
+  const femaleTotal = byAgeGroup.reduce((s, g) => s + (gender === 'male' ? 0 : g.female), 0);
+  const total       = maleTotal + femaleTotal;
+
+  return { total, maleTotal, femaleTotal, byAgeGroup };
 }

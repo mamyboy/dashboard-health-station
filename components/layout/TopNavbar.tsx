@@ -1,14 +1,10 @@
 "use client"
 
 import {
-  Bell, Search, Moon, Sun, RefreshCw, User, Sparkles, CalendarDays,
+  CalendarDays,
   PanelLeft, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react'
-import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/components/ui/use-toast'
-import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface TopNavbarProps {
@@ -32,21 +28,6 @@ export function TopNavbar({
   onToggleSidebarHidden,
   onToggleMobileSidebar,
 }: TopNavbarProps) {
-  const { theme, setTheme } = useTheme()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => { setMounted(true) }, [])
-
-  const handleRefresh = () => {
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast({ title: 'อัปเดตข้อมูลสำเร็จ', description: 'ข้อมูลจำลองได้รับการโหลดใหม่', variant: 'success' })
-    }, 1200)
-  }
-
   return (
     <header className="sticky top-0 z-30 flex min-h-[64px] items-center gap-2 border-b border-white/70 bg-white/80 px-3 py-2 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:border-white/10 dark:bg-slate-950/75 sm:h-[72px] sm:gap-4 sm:px-6 sm:py-0">
       <div className="flex items-center gap-2">
@@ -83,11 +64,19 @@ export function TopNavbar({
 
       {/* Title */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="hidden h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:bg-cyan-400/15 dark:text-cyan-300 sm:inline-flex">
-            <Sparkles className="h-4 w-4" />
-          </span>
-          <h1 className="truncate text-sm font-bold text-foreground sm:text-lg">{title}</h1>
+        <div className="flex items-center gap-2.5">
+          <h1
+            className="truncate text-sm font-extrabold tracking-tight sm:text-lg"
+            style={{
+              backgroundImage: 'linear-gradient(90deg, #0891b2 0%, #0ea5e9 50%, #2563eb 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            {title}
+          </h1>
         </div>
         {subtitle && <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground sm:text-xs">{subtitle}</p>}
         {!subtitle && (
@@ -98,37 +87,6 @@ export function TopNavbar({
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="ค้นหา..." className="h-9 w-56 rounded-lg border-white/80 bg-white/70 pl-9 text-sm shadow-sm dark:border-white/10 dark:bg-white/5" />
-        </div>
-
-        <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={loading} className="h-9 w-9 rounded-lg bg-white/50 shadow-sm hover:bg-cyan-50 dark:bg-white/5 dark:hover:bg-cyan-400/10">
-          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
-        </Button>
-
-        {mounted && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-lg bg-white/50 shadow-sm hover:bg-amber-50 dark:bg-white/5 dark:hover:bg-amber-400/10"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-        )}
-
-        <Button variant="ghost" size="icon" className="relative hidden h-9 w-9 rounded-lg bg-white/50 shadow-sm hover:bg-rose-50 dark:bg-white/5 dark:hover:bg-rose-400/10 sm:inline-flex">
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950" />
-        </Button>
-
-        <div className="hidden h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 via-sky-500 to-emerald-400 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 sm:flex">
-          <User className="h-4 w-4" />
-        </div>
-      </div>
     </header>
   )
 }

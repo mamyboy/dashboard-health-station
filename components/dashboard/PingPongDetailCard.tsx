@@ -3,7 +3,7 @@
 import { AggregateSummary, ProgramType } from '@/types/health-station';
 import { formatNumber, formatPercent } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
-import { Activity, CheckCircle2, ClipboardList, ListChecks } from 'lucide-react';
+import { Activity, CheckCircle2, ClipboardList, ListChecks, UserCheck, Users } from 'lucide-react';
 
 /* ───────────────────── ข้อมูลเกณฑ์แต่ละสี ───────────────────── */
 
@@ -206,6 +206,21 @@ function getCount(summary: AggregateSummary, key: string): number {
   return (summary[key as keyof AggregateSummary] as number) ?? 0;
 }
 
+/* ปรับความสว่างของสี hex (percent > 0 = อ่อนลง, < 0 = เข้มลง) */
+function adjustColor(hex: string, percent: number): string {
+  const clean = hex.replace('#', '');
+  const num = parseInt(clean, 16);
+  let r = (num >> 16) & 0xff;
+  let g = (num >> 8) & 0xff;
+  let b = num & 0xff;
+  const target = percent < 0 ? 0 : 255;
+  const p = Math.abs(percent);
+  r = Math.round((target - r) * p) + r;
+  g = Math.round((target - g) * p) + g;
+  b = Math.round((target - b) * p) + b;
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 /* ───────────────────── Component ───────────────────── */
 
 interface Props {
@@ -214,9 +229,104 @@ interface Props {
 }
 
 export function PingPongDetailCard({ summary, program }: Props) {
-  const colors = program === 'dm' ? DM_COLORS : HT_COLORS;
-  const totalAll = colors.reduce((s, c) => s + getCount(summary, c.key), 0) || 1;
+  const allColors = program === 'dm' ? DM_COLORS : HT_COLORS;
+
+  // แยกกลุ่มคัดกรอง และ กลุ่มป่วย
+  const screeningColors = allColors.filter(c => c.key === 'normal' || c.key === 'risk_suspected');
+  const patientColors = allColors.filter(c => c.key !== 'normal' && c.key !== 'risk_suspected');
+
+  const totalAll = allColors.reduce((s, c) => s + getCount(summary, c.key), 0) || 1;
   const programLabel = program === 'dm' ? 'เบาหวาน' : 'ความดัน';
+
+  const renderColorCard = (c: ColorMeta) => {
+    const count = getCount(summary, c.key);
+    const pct = (count / totalAll) * 100;
+
+    return (
+      <div
+        key={c.key}
+        className="group relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md"
+      >
+        {/* Accent bar top */}
+        <div className="h-1 w-full" style={{ background: c.bg }} />
+
+        {/* Circle */}
+        <div className="flex flex-col items-center gap-2 px-3 py-4">
+          <div
+            className="relative flex h-16 w-16 items-center justify-center rounded-full text-2xl font-black shadow-[0_6px_14px_-3px_rgba(0,0,0,0.30),inset_0_-5px_10px_rgba(0,0,0,0.28),inset_0_5px_10px_rgba(255,255,255,0.40)] ring-4 ring-white/70 transition-transform duration-200 group-hover:scale-105 dark:ring-white/10"
+            style={{
+              background: `radial-gradient(circle at 32% 28%, ${adjustColor(c.bg, 0.38)} 0%, ${c.bg} 46%, ${adjustColor(c.bg, -0.38)} 100%)`,
+              color: c.text,
+            }}
+          >
+            <span className="relative z-10">{c.symbol}</span>
+            {/* Specular highlight — จุดแสงสะท้อนด้านบนซ้าย */}
+            <div className="pointer-events-none absolute left-[17%] top-[13%] h-4 w-4 rounded-full bg-white/45 blur-[2px]" />
+            {/* Glossy bottom sheen */}
+            <div className="pointer-events-none absolute inset-x-2.5 bottom-2 h-2.5 rounded-full bg-white/10 blur-[3px]" />
+            {/* glow เมื่อ hover */}
+            <div
+              className="absolute -inset-1 rounded-full opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-40"
+              style={{ background: c.bg }}
+            />
+          </div>
+          <p className="text-center text-[11px] font-bold leading-tight text-foreground">{c.label}</p>
+        </div>
+
+        {/* Count */}
+        <div className="px-3 pb-3 pt-1 text-center">
+          <p className="text-3xl font-black tracking-tighter tabular-nums text-foreground">{formatNumber(count)}</p>
+          <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">ราย · {formatPercent(pct)}</p>
+          <div className="mx-auto mt-2 h-1.5 w-full max-w-[90%] overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${Math.min(pct, 100)}%`, background: c.bg }}
+            />
+          </div>
+        </div>
+
+        <div className="mx-3 border-t border-dashed border-border/60" />
+
+        {/* Criteria */}
+        <div className="px-3 py-2.5">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded bg-muted">
+              <ClipboardList className="h-2.5 w-2.5 text-muted-foreground" />
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">เกณฑ์</p>
+          </div>
+          <ul className="space-y-1">
+            {c.criteria.map((cr) => (
+              <li key={cr} className="flex items-start gap-1 text-[10px] leading-snug text-foreground/80">
+                <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: c.bg }} />
+                {cr}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mx-3 border-t border-dashed border-border/60" />
+
+        {/* Actions */}
+        <div className="flex-1 px-3 py-2.5 pb-4">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded bg-muted">
+              <ListChecks className="h-2.5 w-2.5 text-muted-foreground" />
+            </div>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">การดำเนินงาน</p>
+          </div>
+          <ul className="space-y-1">
+            {c.actions.map((a) => (
+              <li key={a} className="flex items-start gap-1 text-[10px] leading-snug text-foreground/80">
+                <CheckCircle2 className="mt-0.5 h-2.5 w-2.5 shrink-0 text-muted-foreground/60" />
+                {a}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
@@ -242,110 +352,44 @@ export function PingPongDetailCard({ summary, program }: Props) {
         </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className="overflow-x-auto bg-muted/20 p-3">
-        <div
-          className="grid min-w-[780px] gap-2.5"
-          style={{ gridTemplateColumns: `repeat(${colors.length}, 1fr)` }}
-        >
-          {colors.map((c) => {
-            const count = getCount(summary, c.key);
-            const pct   = (count / totalAll) * 100;
-            const isPatient = c.key !== 'normal' && c.key !== 'risk_suspected';
-            const isBlack = c.key === 'black';
-
-            return (
-              <div
-                key={c.key}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md"
-              >
-                {/* Accent bar top */}
-                <div className="h-1 w-full" style={{ background: c.bg }} />
-
-                {/* Group label */}
-                <div className="px-3 pt-2.5 text-center">
-                  <span className={cn(
-                    'inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest',
-                    !isPatient
-                      ? 'border-primary/20 bg-primary/10 text-primary dark:border-cyan-400/20 dark:bg-cyan-400/10 dark:text-cyan-200'
-                      : isBlack
-                        ? 'border-slate-500/20 bg-slate-500/10 text-slate-600 dark:text-slate-300'
-                        : 'border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-300',
-                  )}>
-                    {!isPatient ? 'คัดกรอง' : isBlack ? 'แทรกซ้อน' : 'กลุ่มป่วย'}
-                  </span>
-                </div>
-
-                {/* Circle */}
-                <div className="flex flex-col items-center gap-2 px-3 py-3">
-                  <div
-                    className="relative flex h-14 w-14 items-center justify-center rounded-full text-lg font-black shadow-lg ring-4 ring-white/80 transition-transform duration-200 group-hover:scale-105 dark:ring-white/10"
-                    style={{ background: c.bg, color: c.text }}
-                  >
-                    {c.symbol}
-                    {/* glow */}
-                    <div
-                      className="absolute inset-0 rounded-full opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-40"
-                      style={{ background: c.bg }}
-                    />
-                  </div>
-                  <p className="text-center text-[11px] font-bold leading-tight text-foreground">{c.label}</p>
-                </div>
-
-                {/* Count */}
-                <div className="px-3 pb-2 text-center">
-                  <p className="text-lg font-black tracking-tight text-foreground">{formatNumber(count)}</p>
-                  <p className="text-[10px] text-muted-foreground">ราย · {formatPercent(pct)}</p>
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${Math.min(pct, 100)}%`, background: c.bg }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mx-3 border-t border-dashed border-border/60" />
-
-                {/* Criteria */}
-                <div className="px-3 py-2.5">
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <div className="flex h-4 w-4 items-center justify-center rounded bg-muted">
-                      <ClipboardList className="h-2.5 w-2.5 text-muted-foreground" />
-                    </div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">เกณฑ์</p>
-                  </div>
-                  <ul className="space-y-1">
-                    {c.criteria.map((cr) => (
-                      <li key={cr} className="flex items-start gap-1 text-[10px] leading-snug text-foreground/80">
-                        <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: c.bg }} />
-                        {cr}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mx-3 border-t border-dashed border-border/60" />
-
-                {/* Actions */}
-                <div className="flex-1 px-3 py-2.5 pb-4">
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <div className="flex h-4 w-4 items-center justify-center rounded bg-muted">
-                      <ListChecks className="h-2.5 w-2.5 text-muted-foreground" />
-                    </div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">การดำเนินงาน</p>
-                  </div>
-                  <ul className="space-y-1">
-                    {c.actions.map((a) => (
-                      <li key={a} className="flex items-start gap-1 text-[10px] leading-snug text-foreground/80">
-                        <CheckCircle2 className="mt-0.5 h-2.5 w-2.5 shrink-0 text-muted-foreground/60" />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+      <div className="bg-muted/20 p-4">
+        <div className="flex items-stretch gap-3">
+          {/* กลุ่มคัดกรอง */}
+          <div
+            className="flex flex-col rounded-xl bg-primary/5 p-2"
+            style={{ flex: screeningColors.length }}
+          >
+            <div className="mb-2 flex items-center justify-center gap-2 px-1">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <UserCheck className="h-3.5 w-3.5" />
               </div>
-            );
-          })}
+              <h3 className="whitespace-nowrap text-sm font-black uppercase tracking-wider text-primary">กลุ่มคัดกรอง</h3>
+            </div>
+            <div className="flex flex-1 gap-3">
+              {screeningColors.map(renderColorCard)}
+            </div>
+          </div>
+
+          {/* เส้นคั่นแบ่งกลุ่ม */}
+          <div className="flex items-center">
+            <div className="h-full w-px bg-gradient-to-b from-transparent via-border to-transparent" />
+          </div>
+
+          {/* กลุ่มป่วย */}
+          <div
+            className="flex flex-col rounded-xl bg-red-500/5 p-2"
+            style={{ flex: patientColors.length }}
+          >
+            <div className="mb-2 flex items-center justify-center gap-2 px-1">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500/10 text-red-600">
+                <Users className="h-3.5 w-3.5" />
+              </div>
+              <h3 className="whitespace-nowrap text-sm font-black uppercase tracking-wider text-red-600">กลุ่มป่วย</h3>
+            </div>
+            <div className="flex flex-1 gap-3">
+              {patientColors.map(renderColorCard)}
+            </div>
+          </div>
         </div>
       </div>
 

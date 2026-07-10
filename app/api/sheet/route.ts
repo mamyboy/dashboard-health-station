@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { parseSheetCSV } from '@/lib/sheet-parser';
+import { parseSheetCSV, parsePopulationCSV } from '@/lib/sheet-parser';
 
 // บังคับให้ route นี้เป็น dynamic เสมอ — ไม่ถูก static optimize
 export const dynamic = 'force-dynamic';
@@ -13,10 +13,10 @@ function sheetUrl(sheet: string) {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const program = searchParams.get('program') as 'dm' | 'ht' | null;
+  const program = searchParams.get('program') as 'dm' | 'ht' | 'pop' | null;
 
-  if (program !== 'dm' && program !== 'ht') {
-    return NextResponse.json({ error: 'program must be dm or ht' }, { status: 400 });
+  if (program !== 'dm' && program !== 'ht' && program !== 'pop') {
+    return NextResponse.json({ error: 'program must be dm, ht or pop' }, { status: 400 });
   }
 
   try {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const res = await fetch(sheetUrl(program), { cache: 'no-store' });
     if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
     const csv = await res.text();
-    const records = parseSheetCSV(csv, program);
+    const records = program === 'pop' ? parsePopulationCSV(csv) : parseSheetCSV(csv, program);
     return NextResponse.json(records, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
