@@ -158,22 +158,7 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[
-                { label: 'แถวข้อมูล', value: formatNumber(allRecords.length), icon: Database },
-                { label: 'พื้นที่', value: `${formatNumber(byDistrict.length)} อำเภอ`, icon: MapPinned },
-                { label: 'คัดกรอง', value: formatPercent(screenedShare), icon: ClipboardCheck },
-                { label: 'เสี่ยงรวม', value: formatPercent(riskRate), icon: Gauge },
-              ].map((item) => (
-                <div key={item.label} className="rounded-lg border border-white/30 bg-slate-950/45 px-3 py-2 backdrop-blur">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-white/85">
-                    <item.icon className="h-3.5 w-3.5" />
-                    {item.label}
-                  </div>
-                  <p className="mt-1 text-sm font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.45)]">{item.value}</p>
-                </div>
-              ))}
-            </div>
+            <div className="flex-1" />
           </div>
         </div>
 
@@ -197,24 +182,7 @@ export function DashboardClient({ initialDmData, initialHtData }: Props) {
             ))}
           </div>
 
-          <div className="flex flex-1 flex-wrap items-center justify-start gap-2 md:justify-end">
-            <span className={cn('inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold', programMeta.soft)}>
-              <Layers3 className="h-3.5 w-3.5" />
-              ตัวกรอง {formatNumber(filtered.length)} แถว
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-              <span className="live-dot" />
-              Live {lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </span>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-muted disabled:opacity-50 dark:bg-white/5"
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', refreshing && 'animate-spin')} />
-              {refreshing ? 'กำลังโหลด...' : 'รีเฟรช'}
-            </button>
-          </div>
+          <div className="flex-1" />
         </div>
       </div>
 
